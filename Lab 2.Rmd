@@ -1,0 +1,44 @@
+---
+title: "Group Lab 2 - Mapping Data on Employment and Industry in the US"
+author: "Group 4: Daniella, Emmi, Gabby, Macklan, Sean"
+date: "January 31, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Context
+
+<!-- EMMI: Discussion about errors in census data-->
+<!-- Why our area is of particular interest-->
+<!--Need to describe main findings when we're done with everything else.-->
+
+#Non-Spatial Visualizations
+
+```{r, include = FALSE}
+# Second step
+```
+
+#Basic Static Maps
+
+```{r, include = FALSE}
+# Block level variable
+```
+
+```{r, include = FALSE}
+# Tract level variable
+```
+
+# Mapping OD Data
+
+```{r, include = FALSE}
+# Fourth and fifth step. Static or interactive map. Subset of a tract? Two layers
+```
+
+#Additional Analysis
+```{r, include = FALSE}
+# at least one additional geocomputation
+```
+
