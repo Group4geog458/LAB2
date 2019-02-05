@@ -36,5 +36,4 @@ od_all_both <- od %>%
   summarise_all(funs(sum)) %>% 
   filter(between(work_tract, 40109000000, 40110000000) & between(home_tract, 40109000000, 40110000000))
 
-
-print(od_all_both)
+write_csv(od_all_both,"OD_tract_aggregation.csv")
