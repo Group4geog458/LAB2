@@ -29,9 +29,18 @@ od_all <- od %>%
   filter(between(work_tract, 40109000000, 40110000000) | between(home_tract, 40109000000, 40110000000))
 
 # Generating a sum of all the job columns
-od_all$sum <-  rowSums(od_all[3:12])
+od_all$total_sum <-  rowSums(od_all[3])
+od_all$goods_sum <- rowSums(od_all[10])
+od_all$trade_sum <- rowSums(od_all[11])
+od_all$other_sum <- rowSums(od_all[12])
 
 # Creating a new dataframe of just work_tract, home_tract and the sums
-od_sum <- select(od_all, work_tract, home_tract, sum)
+od_sum <- select(od_all, 
+                 work_tract, 
+                 home_tract, 
+                 total_sum, 
+                 goods_sum,
+                 trade_sum,
+                 other_sum)
 
 print(od_sum)
