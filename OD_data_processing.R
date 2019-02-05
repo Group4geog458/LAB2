@@ -23,9 +23,18 @@ od <- od %>%
 # Group by the work_trat and home_tract
 # Then generating sums of the groups
 # Filtering to only the tracts within the Oklahoma County
-od_all <- od %>% 
+
+# This contains the tracts that have either the work or residence within the OK County
+od_all_one <- od %>% 
   group_by(work_tract, home_tract) %>%
   summarise_all(funs(sum)) %>% 
   filter(between(work_tract, 40109000000, 40110000000) | between(home_tract, 40109000000, 40110000000))
 
-print(od_all)
+# Both work and residence are within OK county
+od_all_both <- od %>% 
+  group_by(work_tract, home_tract) %>%
+  summarise_all(funs(sum)) %>% 
+  filter(between(work_tract, 40109000000, 40110000000) & between(home_tract, 40109000000, 40110000000))
+
+
+print(od_all_both)
