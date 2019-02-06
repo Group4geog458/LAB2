@@ -47,10 +47,11 @@ library(stringr)
 library(sf)
 library(tidycensus)
 
-od_all_both <- read.csv(file="OD_tract_aggregation.csv")
+od_all_both <- read.csv(file="OD_TEST_TRACT.csv")
 
-OD <- od_all_both %>% filter(work_tract == home_tract) %>% select(work_tract, home_tract, S000)
+OD <- od_all_both %>% select(work_tract, home_tract, S000)
 
+ok_work_tract <- od_all_both %>% filter(work_tract == home_tract)
 
 library(tidyverse)
 library(tidycensus)
@@ -62,25 +63,26 @@ library(RColorBrewer)
 
 tracts <- tracts("40", "109")
 
-ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="work_tract")
+ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="home_tract")
 
+ok_work_tract <- geo_join(tracts, ok_work_tract, by_sp="GEOID", by_df="home_tract")
 
 pal <- colorNumeric("Reds", domain = ok_all$S000)
 
 ok_all <- ok_all %>%
-    leaflet(width = "100%") %>%
-    addProviderTiles(provider = "CartoDB.Positron") %>%
-    addPolygons(popup = ~ str_extract(work_tract, "^([^,]*)"),
-                color = "#444444",
-                weight = 1,
-                smoothFactor = 0,
-                fillOpacity = 0.7,
-                fillColor = ~ pal(S000)) %>%
-    addLegend("bottomright", 
-              pal = pal, 
-              values = ~ S000,
-              title = "Total Number of Jobs",
-              opacity = 1)
+          leaflet(width = "100%") %>%
+          addProviderTiles(provider = "CartoDB.Positron") %>%
+          addPolygons(popup = ~ str_extract(S000, "^([^,]*)"),
+                      color = "#444444",
+                      weight = 1,
+                      smoothFactor = 0,
+                      fillOpacity = 0.7,
+                      fillColor = ~ pal(S000)) %>%
+          addLegend("bottomright", 
+                    pal = pal, 
+                    values = ~ S000,
+                    title = "How many people live in each tract that work in tract: 40109108601",
+                    opacity = 1)
 
 
 ```
