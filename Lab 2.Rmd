@@ -51,8 +51,10 @@ OK_tracts<- tracts('40', county = '109', cb = TRUE, year = 2015)
 print(OK_tracts)
 
 
-#Selecting Oklahoma County
+#Selecting Oklahoma County 
+#wac_tract.csv is wac_okall_aggregation.csv 
 WAC<- read.csv("/Users/gabbyshelley/Desktop/GIS directory/wac_tract.csv", stringsAsFactors = FALSE) 
+#Selecting only OK County (109)
 only109 <- WAC[c(422:662), c(1:53)]
 print(only109)
 
