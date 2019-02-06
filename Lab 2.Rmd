@@ -104,7 +104,7 @@ ok109 <- geo_join(OK_tracts, only109, "GEOID", "work_tract")
 #Static Map
 spplot(ok109,"C000",col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Tracts") 
 ```
-
+Through aggregating the census blocks into the larger census tracts, we are able to get a better look at the density of jobs within Oklahoma County. The majority of the jobs within the county surround downtown Oklahoma City. Tract 40109108601 has the highest concentration of jobs, with 20,927 jobs in total. This southwestern tract employs workers who are majorily between the ages of [30 to 54](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf). The main two sectors within this tract are retailing trade and transportation and warehousing. In relation to the county as a whole, this tract displays the most common sectors but with the exception of [Healthcare & Social Assistance and Accommodation & Food Serivces](https://datausa.io/profile/geo/oklahoma-county-ok/). On the outskirts of Oklahoma City, the county's population is mostly employed by Mining and Quarrying, mining mainly [clay, sand and gravel](http://mines.ok.gov/Websites/mines1/images/Production/2017%20Minerals%20Charts.pdf).
 
 
 # Mapping OD Data
