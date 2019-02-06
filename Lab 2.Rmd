@@ -64,7 +64,9 @@ ok109_blocks <- geo_join(OKC, full, "GEOID10", "w_geocode")
 #Oklahoma County Census Blocks looking at Total Jobs
 spplot(ok109_blocks,"C000", col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Blocks") 
 ```
-
+  Oklahoma County is the most populated county within Oklahoma, having a population of [787,958](https://www.census.gov/quickfacts/oklahomacountyoklahoma). The majority of the population resides in the Southwest portion, due to the location of the capital, which is in the Southwest corner of the [county](https://statisticalatlas.com/county/Oklahoma/Oklahoma-County/Population). By mapping the total number of jobs throughout Oklahoma County, we can see that the majority of the jobs are located in the Southwest corner. Having a portion of Oklahoma City within its borders, the county greatly increases it job count and has a higher number of workers living a short commute away from downtown.
+  From this map, it is difficult to distinguish the census blocks from one another. This makes the data tough to read, but we can get a general gist about the characteristics of the county. If we aggregate the data into their corresponding census tracts, we will be able to get a better look at the job totals within the county.
+  
 ```{r, include = FALSE}
 #Tract-level Variable 
 library(sp)
