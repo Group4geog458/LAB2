@@ -1,4 +1,12 @@
 library(tidyverse)
+library(tigris)
+library(tmap)
+library(ggplot2)
+library(leaflet)
+library(stringr)
+library(sf)
+library(tidycensus)
+
 od <- read.csv(file="ok_od_main_JT00_2015.csv")
 
 od$w_geocode<-as.character(od$w_geocode)
@@ -36,4 +44,42 @@ od_all_both <- od %>%
   summarise_all(funs(sum)) %>% 
   filter(between(work_tract, 40109000000, 40110000000) & between(home_tract, 40109000000, 40110000000))
 
-write_csv(od_all_both,"OD_tract_aggregation.csv")
+##########################################################
+
+OD <- od_all_both %>% filter(work_tract == home_tract) %>% select(work_tract, home_tract, S000)
+
+library(tidyverse)
+library(tidycensus)
+library(leaflet)
+library(stringr)
+library(sf)
+library(RColorBrewer)
+
+
+tracts <- tracts("40", "109")
+
+ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="work_tract")
+
+
+pal <- colorNumeric("Reds", domain = ok_all$S000)
+
+ok_all <- ok_all %>%
+  leaflet(width = "100%") %>%
+  addProviderTiles(provider = "CartoDB.Positron") %>%
+  addPolygons(popup = ~ str_extract(work_tract, "^([^,]*)"),
+              color = "#444444",
+              weight = 1,
+              smoothFactor = 0,
+              fillOpacity = 0.7,
+              fillColor = ~ pal(S000)) %>%
+  addLegend("bottomright", 
+            pal = pal, 
+            values = ~ S000,
+            title = "Total Number of Jobs",
+            opacity = 1)
+
+plot(ok_all)
+
+
+
+

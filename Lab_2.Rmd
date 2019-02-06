@@ -1,0 +1,99 @@
+---
+title: "Group Lab 2 - Mapping Data on Employment and Industry in the US"
+author: "Group 4: Daniella, Emmi, Gabby, Macklan, Sean"
+date: "January 31, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Context
+
+<!-- EMMI: Discussion about errors in census data-->
+<!-- Why our area is of particular interest-->
+<!--Need to describe main findings when we're done with everything else.-->
+
+#Non-Spatial Visualizations
+
+```{r, include = FALSE}
+# Second step
+
+
+
+```
+
+#Basic Static Maps
+
+```{r, include = FALSE}
+# Block level variable
+```
+
+```{r, include = FALSE}
+# Tract level variable
+```
+
+# Mapping OD Data
+
+```{r, include = FALSE}
+# Fourth and fifth step. Static or interactive map. Subset of a tract? Two layers
+library(tidyverse)
+library(tigris)
+library(tmap)
+library(ggplot2)
+library(leaflet)
+library(stringr)
+library(sf)
+library(tidycensus)
+
+od_all_both <- read.csv(file="OD_tract_aggregation.csv")
+
+OD <- od_all_both %>% filter(work_tract == home_tract) %>% select(work_tract, home_tract, S000)
+
+
+library(tidyverse)
+library(tidycensus)
+library(leaflet)
+library(stringr)
+library(sf)
+library(RColorBrewer)
+
+
+tracts <- tracts("40", "109")
+
+ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="work_tract")
+
+
+pal <- colorNumeric("Reds", domain = ok_all$S000)
+
+ok_all <- ok_all %>%
+    leaflet(width = "100%") %>%
+    addProviderTiles(provider = "CartoDB.Positron") %>%
+    addPolygons(popup = ~ str_extract(work_tract, "^([^,]*)"),
+                color = "#444444",
+                weight = 1,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                fillColor = ~ pal(S000)) %>%
+    addLegend("bottomright", 
+              pal = pal, 
+              values = ~ S000,
+              title = "Total Number of Jobs",
+              opacity = 1)
+
+
+```
+
+```{r, echo=FALSE}
+
+ok_all
+
+
+```
+
+#Additional Analysis
+```{r, include = FALSE}
+# at least one additional geocomputation
+```
+

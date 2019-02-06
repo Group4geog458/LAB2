@@ -19,6 +19,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include = FALSE}
 # Second step
+
+
+
 ```
 
 #Basic Static Maps
@@ -35,6 +38,56 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include = FALSE}
 # Fourth and fifth step. Static or interactive map. Subset of a tract? Two layers
+library(tidyverse)
+library(tigris)
+library(tmap)
+library(ggplot2)
+library(leaflet)
+library(stringr)
+library(sf)
+library(tidycensus)
+
+od_all_both <- read.csv(file="OD_tract_aggregation.csv")
+
+OD <- od_all_both %>% filter(work_tract == home_tract) %>% select(work_tract, home_tract, S000)
+
+
+library(tidyverse)
+library(tidycensus)
+library(leaflet)
+library(stringr)
+library(sf)
+
+
+tracts <- tracts("40", "109")
+
+ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="work_tract")
+
+
+pal <- colorQuantile(palette = "viridis", domain = ok_all$S000, n = 10)
+
+ok_all <- ok_all %>%
+    leaflet(width = "100%") %>%
+    addProviderTiles(provider = "CartoDB.Positron") %>%
+    addPolygons(
+                stroke = FALSE,
+                smoothFactor = 0,
+                fillOpacity = 0.7,
+                color = ~ pal(S000)) %>%
+    addLegend("bottomright", 
+              pal = pal, 
+              values = ~ S000,
+              title = "Population percentiles",
+              opacity = 1)
+
+
+```
+
+```{r, echo=FALSE}
+
+ok_all
+
+
 ```
 
 #Additional Analysis
