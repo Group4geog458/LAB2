@@ -32,7 +32,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Mapping OD Data
-
 ```{r, include = FALSE}
 # Fourth and fifth step. Static or interactive map. Subset of a tract? Two layers
 library(tidyverse)
@@ -43,33 +42,49 @@ library(sf)
 library(tidycensus)
 od_all_both <- read.csv(file="OD_TEST_TRACT.csv")
 OD <- od_all_both %>% select(work_tract, home_tract, S000)
-ok_work_tract <- od_all_both %>% filter(work_tract == home_tract)
+ok_work_tract <- od_all_both %>% filter(work_tract == home_tract) %>% select(work_tract, home_tract, S000)
 
 library(RColorBrewer)
 
 tracts <- tracts("40", "109")
+
 ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="home_tract")
-ok_work_tract <- geo_join(tracts, ok_work_tract, by_sp="GEOID", by_df="home_tract")
+
+ok_work_tract <- geo_join(tracts, ok_work_tract, by_sp="GEOID", by_df="home_tract", how="inner")
+
 pal <- colorNumeric("Reds", domain = ok_all$S000)
-ok_all <- ok_all %>%
-          leaflet(width = "100%") %>%
+
+ok_all <- leaflet(width = "100%") %>%
           addProviderTiles(provider = "CartoDB.Positron") %>%
-          addPolygons(popup = ~ str_extract(S000, "^([^,]*)"),
+          addPolygons(data=ok_all,
+                      popup = ~ str_extract(S000, "^([^,]*)"),
                       color = "#444444",
                       weight = 1,
                       smoothFactor = 0,
                       fillOpacity = 0.7,
-                      fillColor = ~ pal(S000)) %>%
-          addLegend("bottomright", 
+                      fillColor = ~ pal(S000),
+                      group="home_tracts") %>%
+          addLegend(data=ok_all,
+                    "bottomright", 
                     pal = pal, 
                     values = ~ S000,
                     title = "How many people live in each tract that work in tract: 40109108601",
-                    opacity = 1)
+                    opacity = 1) %>%
+          addPolygons(data=ok_work_tract,
+                      popup = ~ str_extract(S000, "^([^,]*)"),
+                      color="yellow",
+                      fillOpacity = 0.0,
+                      weight=3, 
+                      group="work_tract: 40109108601") %>%
+          addLayersControl(overlayGroups = c("work_tract: 40109108601"),
+                           options = layersControlOptions(collapsed=FALSE))
 ```
 
 ```{r, echo=FALSE}
 ok_all
 ```
+
+After taking the OD data for the state of Oklahoma, focusing on specifically Oklahoma County and then aggregating the data to the tract level; the first through was to map the tracts with the highest number of jobs and where they were living. The tract of 40109108601 has the highest total number of jobs and had a very diverse set of home tracts and how many people live in each tract. Most of the other work tracts in Oklahoma County had the majority of people working there also living in that tract as well, the work tract 40109108601 follows this trend but also has people living in every other tract in the county and a more diverse workforce, in terms of where they live. Although this tract is not the "downtown" of Oklhaoma City, it has the most number of jobs because of its larger stockyards and warehouses in that tract. 
 
 #Additional Analysis
 ```{r, include = FALSE}
