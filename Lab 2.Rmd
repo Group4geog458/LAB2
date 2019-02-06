@@ -25,6 +25,44 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include = FALSE}
 # Block level variable
+library(sp)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(dplyr)
+library(tigris)
+
+library(tigris)
+options(tigris_class = "sp")
+co <- counties(cb = TRUE)
+head(co)
+
+library(RColorBrewer)
+display.brewer.all(type="seq")
+pal <- brewer.pal(9, "GnBu") 
+class(pal)
+
+#Tigris OK County Census Blocks 
+OKC <- blocks(state = "40", county = "109")
+print(OKC)
+
+#All WAC data
+WAC_all<- read.csv("/Users/gabbyshelley/Desktop/GIS directory/ok_wac_S000_JT00_2015.csv", stringsAsFactors = FALSE) 
+print(WAC_all)
+
+#Narrowing WAC data to only 40109 - Oklahoma County 
+half<- filter(WAC_all, w_geocode > 401090000000000)
+print(half)
+
+full<- filter(half, w_geocode < 401100000000000)
+print(full)
+
+#Spatial Join
+ok109_blocks <- geo_join(OKC, full, "GEOID10", "w_geocode")
+
+#Oklahoma County Census Blocks looking at Total Jobs
+spplot(ok109_blocks,"C000", col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Blocks") 
 ```
 
 ```{r, include = FALSE}
