@@ -1,0 +1,70 @@
+---
+title: "Dani - Step 6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Additional Analysis (step 6)
+```{r, include = FALSE}
+# at least one additional geocomputation
+#tracts <- shapefile("2015_census_tracts/tl_2015_40_tract.shp")
+rac <- read.csv("RAC_tract_aggregation.csv")
+ok_tracts <- tracts('40', county='109', cb= TRUE, year = 2015)
+
+#merge on common variable
+merge <- geo_join(ok_tracts, rac, by_sp="GEOID", by_df="tract_geocode")
+
+#calculating "neighbors"
+nb <- poly2nb(merge, queen=TRUE)
+lw <- nb2listw(nb, style="W", zero.policy=TRUE)
+
+# moran's 1 stastistic for CE03 - Number of jobs with earnings greater than $3333/month
+moran.test(merge$CE03,lw)
+# moran's 1 stastistic for CE02 - Number of jobs with earnings $1251/month to $3333/month 
+moran.test(merge$CE02,lw)
+# moran's 1 stastistic for CE01 - Number of jobs with earnings $1250/month or less 
+moran.test(merge$CE01,lw)
+```
+
+The Local Moran's I computation identifies clusters of features with values similar in magnitude and also identifies spatial outliers. ![This](http://resources.esri.com/help/9.3/arcgisengine/java/gp_toolref/spatial_statistics_tools/how_cluster_and_outlier_analysis_colon_anselin_local_moran_s_i_spatial_statistics_works.htm) explains more about the mathm involved. For this step we calculated the local moran's for 3 similar variables: CE01 which is the number of jobs with earnings $1250/month or less, CE02 which is the number of jobs with earnings $1251 per month to $3333 per month, and CE03 which is the number of jobs with earnings greater than $3333/month. For these tests, we defined “neighboring” polygons by adopting a contiguous neighbor definition where we’ll accept any contiguous polygon that shares at least on vertex (this is the “queen” case and is defined by setting the parameter queen=TRUE). Next, assigned weights to each neighboring polygon by assigning equal weight (style="W"). This is accomplished by assigning the fraction 1/ (the number of neighbors) to each neighboring tract then summing the weighted income values. While this is the most intuitive way to summarize the neighbors’ values it has one drawback in that polygons along the edges of the study area will base their lagged values on fewer polygons thus potentially over- or under-estimating the true nature of the spatial autocorrelation in the data. For simplicity sake we chose the style="W" option. The zero.policy=TRUE option allows for lists of non-neighbors.
+
+Here are the results from each of these tests: 
+*CE01 - Number of jobs with earnings $1250/month or less*
+
+data:  merge$CE01  
+weights: lw    
+
+Moran I statistic standard deviate = 8.9957, p-value < 2.2e-16
+alternative hypothesis: greater
+sample estimates:
+Moran I statistic       Expectation          Variance 
+      0.323907048      -0.004166667       0.001330062 
+
+*CE02 - Number of jobs with earnings $1251/month to $3333/month*
+
+data:  merge$CE02  
+weights: lw    
+
+Moran I statistic standard deviate = 7.9187, p-value = 1.201e-15
+alternative hypothesis: greater
+sample estimates:
+Moran I statistic       Expectation          Variance 
+      0.284475023      -0.004166667       0.001328666 
+
+*CE03 - Number of jobs with earnings greater than $3333/month*
+
+data:  merge$CE03  
+weights: lw    
+
+Moran I statistic standard deviate = 18.155, p-value < 2.2e-16
+alternative hypothesis: greater
+sample estimates:
+Moran I statistic       Expectation          Variance 
+      0.653477326      -0.004166667       0.001312165 
+
+## Results
+What we can gather from these results are that because all three earnings threshold values are positive, all are clustered (if there were negative values that would indicate that they are surrounded by dissimilar values). Additionally, because all three have such low p-values, these clusters are statistically significant. 
+
