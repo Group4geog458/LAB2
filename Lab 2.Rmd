@@ -28,8 +28,42 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include = FALSE}
-# Tract level variable
+#Tract-level Variable 
+library(sp)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(dplyr)
+
+library(tigris)
+options(tigris_class = "sp")
+co <- counties(cb = TRUE)
+head(co)
+
+library(RColorBrewer)
+display.brewer.all(type="seq")
+pal <- brewer.pal(9, "GnBu") 
+class(pal)
+
+#Tigris Data for Oklahoma State Census Tracts
+OK_tracts<- tracts('40', county = '109', cb = TRUE, year = 2015)
+print(OK_tracts)
+
+
+#Selecting Oklahoma County
+WAC<- read.csv("/Users/gabbyshelley/Desktop/GIS directory/wac_tract.csv", stringsAsFactors = FALSE) 
+only109 <- WAC[c(422:662), c(1:53)]
+print(only109)
+
+#Spatial Join
+ok109 <- geo_join(OK_tracts, only109, "GEOID", "work_tract")
+
+#Static Map
+spplot(ok109,"C000",col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Tracts") 
 ```
+
+
 
 # Mapping OD Data
 
