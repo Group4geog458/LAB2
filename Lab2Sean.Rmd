@@ -1,0 +1,42 @@
+---
+title: "Lab2Seanunfinished"
+author: "sbfogelb"
+date: "February 6, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, results='hide'}
+#SETUP
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+OD_Tract <- read.csv("wac_tract_aggregation_Sean2.csv", fileEncoding = "latin1")
+OD_Tract <- filter(OD_Tract, C000 >= 14416)
+OD_Tract2 <- as.tibble(OD_Tract)
+OD_Tract$work_tract = as.character(OD_Tract$work_tract)
+```
+
+```{r, fig.align='center', echo=FALSE}
+OD_Tract$PercentWhite <- round(OD_Tract$PercentWhite, 3)
+OD_Tract$PercentBlack <- round(OD_Tract$PercentBlack, 3)
+OD_Tract$PercentHispanic <- round(OD_Tract$PercentHispanic, 3)
+OD_Tract$PercentAsian <- round(OD_Tract$PercentAsian, 3)
+
+PercentWhite1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentWhite, label = `PercentWhite`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent White") + ggtitle("Percent of Total Jobs who are filled by White/Caucasians") + theme_bw()
+
+PercentBlack1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentBlack, label = `PercentBlack`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Black") + ggtitle("Percent of Total Jobs who are filled by African Americans") + theme_bw()
+
+PercentHispanic1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentHispanic, label = `PercentHispanic`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Hispanic") + ggtitle("Percent of Total Jobs who are filled by Hispanic/Latino") + theme_bw()
+
+PercentAsian1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentAsian, label = `PercentAsian`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Asian") + ggtitle("Percent of Total Jobs who are filled by Asian Alone") + theme_bw()
+
+PercentWhite1
+PercentBlack1
+PercentHispanic1
+PercentAsian1
+```
+The four graphs above show the distribution of race between the highest job populated work tracts in Oklahoma County. There is a much higher percent of caucasions who work in these tracts than any other race, by almost 70%. African Americans hold the second highest percent of jobs, then Hispanic/Latino, and Asian. The differences in percent between the 4 work tracts are too low to show any correlation between location in Oklahoma and where certain races go to work. The highest significant difference of race vs tract location can be seen in tract 1086.01 where Hispanic/Latinos almost double in percent in the workforce. This could be due to there being a high percent of latino population in tract 1086.01, seen [here](https://censusreporter.org/profiles/14000US40109108601-census-tract-108601-oklahoma-ok/) in the census report for the tract.
