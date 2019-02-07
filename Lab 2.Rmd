@@ -1,44 +1,255 @@
 ---
-title: "Group Lab 2 - Mapping Data on Employment and Industry in the US"
+title: "Lab 2: Mapping Data on Employment and Industry in the US"
 author: "Group 4: Daniella, Emmi, Gabby, Macklan, Sean"
-date: "January 31, 2019"
+date: "February 6, 2019"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+library(raster)
+library(RColorBrewer)
+library(sp)
+library(spdep)
+library(stringr)
+library(tidycensus)
+library(tidyverse)
+library(tigris)
+library(tmap)
+library(tmaptools)
 ```
+***
+##Context
+####Data Source
+<!--Emmi-->The data examined in this analysis comes from the [Longitudinal Employer-Household Dynamics](https://lehd.ces.census.gov/) (LEHD) program at the US Census. This program compiles its information from the Census Bureau, along with statistics on the federal and state level to serve both state and local needs. It is focused on employers and employees, down to the census block-level scale.  Our specific data comes from LEHD's [Origin-Destination Employment Statistics](https://lehd.ces.census.gov/doc/learning_guide/LED_Lodes_Intro.pdf) (LODES), showing counts related to where people live and work. Processed yearly, it includes demographics like age, gender, ethnicity, education, earnings, and sector.  
+<!-- Probably should say something about the difference between OD and WAC/RAC data too?-->
 
-#Context
+####Problems with Census Data
 
-<!-- EMMI: Discussion about errors in census data-->
+> States agree to share Unemployment Insurance earnings data and the Quarterly Census of Employment and Wages (QCEW) data with the Census Bureau. The LEHD program combines these administrative data, additional administrative data and data from censuses and surveys . . . In addition, the LEHD program uses these data to create partially synthetic data on workers' residential patterns.
+
+  While the census is a valuable statistical resource, its resulting data is not perfect. Because of the small scale of census blocks, it can be common for a very small number of individuals to be counted. These cases would make it possible for these individuals to be identified easily, and even determine their income or other sensitive information. For ethical reasons, this microdata must be suppressed and not included in the final product. If this data is not published, other data may also need to be suppressed in order to prevent calculation of individual information where totals and counts are involved. Smaller attributes may also be collected into larger ones, and significant outlying values may be aggregated into another category. This concern for confidentiality in national statistics dates back to 1850. Because of this responsibility for privacy, the LEHD openly acknowledges that its data may be "partially synthetic". In addition to any possible suppression, quite a few [federal departments](https://lehd.ces.census.gov/doc/help/onthemap/FederalEmploymentInOnTheMap.pdf) have been excluded due to "security concerns and differences in administrative processing". The effects of these omissions may be especially significant in Oklahoma County because of activity surrounding the capital.
+
+Sources:
+
+* [An Overview of Disclosure Principles - Colleen Sullivan at the US Bureau of the Census Statistical Research Division](https://www.census.gov/srd/papers/pdf/rr92-09.pdf)
+* [American Community Survey Data Suppression - US Census Bureau](https://www2.census.gov/programs-surveys/acs/tech_docs/data_suppression/ACSO_Data_Suppression.pdf)
+* [Implications of Differential Privacy for Census Bureau Data and Scientific Reasearch - Steven Ruggles at the University of Minnesota](https://assets.ipums.org/_files/mpc/MPC-Working-Paper-2018-6.pdf)
+
+####Area of Focus
 <!-- Why our area is of particular interest-->
-<!--Need to describe main findings when we're done with everything else.-->
+The Oklahoma County area is of interest to us because it is home to the state's capital, which is also its largest city. We wanted to examine an area with a different culture and economy from where we are now in Western Washington. This county in particular is notable because of its central location in the state. The [majority of its voters](https://www.ok.gov/elections/documents/20190115%20-%20Registration%20By%20County%20(vr2420).pdf) are registered as Republican. While unusual for an urban area, this pattern is representative of Oklahoma as a whole.
 
-#Non-Spatial Visualizations
+<!--Need to describe main findings when we're done with everything else. What's the character of employment in this area?-->
+####Main Findings
+This report examines variables including racial composition, job counts within blocks and tracts, and where people live and work. Due to the location of the state capital, the highest concentration of jobs is in the southwest corner of the county. In this tract as well as other highly job-populated tracts was the predominance of white workers (75% and greater), as is representative of the state. This significant tract also has the greatest number of jobs, which is immediately apparent on a choropleth map. Outlying areas that are less urban have far fewer jobs despite larger tract sizes. Few people travel cross-county to work in this tract, but those who already live there make up a larger portion of the total workers. A statistical analysis using Local Moran's I showed that jobs tend to be clustered according to their earnings.
 
-```{r, include = FALSE}
-# Second step
+***
+
+##Non-Spatial Visualizations
+
+```{r nonSptlSetup, include = FALSE, message = FALSE, warning = FALSE}
+#Sean - SETUP
+OD_Tract <- read.csv("wac_tract_aggregation_Sean2.csv", fileEncoding = "latin1")
+OD_Tract <- filter(OD_Tract, C000 >= 14416)
+OD_Tract2 <- as.tibble(OD_Tract)
+OD_Tract$work_tract = as.character(OD_Tract$work_tract)
 ```
 
-#Basic Static Maps
+```{r racePortions, fig.align='center', echo=FALSE}
+OD_Tract$PercentWhite <- round(OD_Tract$PercentWhite, 3)
+OD_Tract$PercentBlack <- round(OD_Tract$PercentBlack, 3)
+OD_Tract$PercentHispanic <- round(OD_Tract$PercentHispanic, 3)
+OD_Tract$PercentAsian <- round(OD_Tract$PercentAsian, 3)
+PercentWhite1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentWhite, label = `PercentWhite`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent White") + ggtitle("Percent of Total Jobs who are filled by White/Caucasians") + theme_bw()
+PercentBlack1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentBlack, label = `PercentBlack`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Black") + ggtitle("Percent of Total Jobs who are filled by African Americans") + theme_bw()
+PercentHispanic1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentHispanic, label = `PercentHispanic`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Hispanic") + ggtitle("Percent of Total Jobs who are filled by Hispanic/Latino") + theme_bw()
+PercentAsian1 <- ggplot(OD_Tract, aes(x=`work_tract`,y=`C000`, fill = PercentAsian, label = `PercentAsian`)) + geom_bar(stat = "identity", width=0.8) +geom_text(size = 5, vjust = 3, color = "white") + xlab("Work Tract") + ylab("Total Number of Jobs") + labs(fill="Percent Asian") + ggtitle("Percent of Total Jobs who are filled by Asian Alone") + theme_bw()
+PercentWhite1
+PercentBlack1
+PercentHispanic1
+PercentAsian1
+```
+The four graphs above show the distribution of race between the highest job-populated work tracts in Oklahoma County. Caucasian workers predominate the job market by around 70% over other races in each selected tract. African Americans hold the second highest percentage of jobs, followed by Hispanic/Latino, and Asian workers.  
+The differences in percent among these work tracts are too low to show any correlation between location in Oklahoma and where certain races go to work. The highest significant difference of race vs tract location can be seen in tract 1086.01 where Hispanic/Latinos almost double in percent in the workforce. This could be due to there being a [high percent](https://censusreporter.org/profiles/14000US40109108601-census-tract-108601-oklahoma-ok/) of Latino population in tract 1086.01, as reported in the census.
 
-```{r, include = FALSE}
-# Block level variable
+***
+
+##Static Maps
+```{r showBlocks, include = FALSE}
+# Gabby -Block level variable
+options(tigris_class = "sp")
+co <- counties(cb = TRUE)
+head(co)
+library(RColorBrewer)
+display.brewer.all(type="seq")
+pal <- brewer.pal(9, "GnBu") 
+class(pal)
+#Tigris OK County Census Blocks 
+OKC <- blocks(state = "40", county = "109")
+print(OKC)
+#All WAC data
+WAC_all<- read.csv("ok_wac_S000_JT00_2015.csv", stringsAsFactors = FALSE) 
+print(WAC_all)
+#Narrowing WAC data to only 40109 - Oklahoma County 
+half<- filter(WAC_all, w_geocode > 401090000000000)
+print(half)
+full<- filter(half, w_geocode < 401100000000000)
+print(full)
+#Spatial Join
+ok109_blocks <- geo_join(OKC, full, "GEOID10", "w_geocode")
+#Oklahoma County Census Blocks looking at Total Jobs
+totalJobsBlocks <- spplot(ok109_blocks,"C000", col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Blocks") 
 ```
 
-```{r, include = FALSE}
-# Tract level variable
+```{r showJobsInBlocks, fig.align = 'center', echo=FALSE}
+totalJobsBlocks
+```
+  Oklahoma County is Oklahoma's most populous county. The majority of its [787,958 residents](https://www.census.gov/quickfacts/oklahomacountyoklahoma) are located in the southwest portion. This is due to its [proximity to Oklahoma's capital city](https://statisticalatlas.com/county/Oklahoma/Oklahoma-County/Population), Oklahoma City (OKC), in the county's southwest corner. As a result of mapping the total number of jobs throughout the county, we can see that the majority of the jobs are located in the southwest corner. Having a portion of the state capital within its borders, the county has a greatly increased job count and has a higher number of workers living a short commute away from downtown. The smaller block divisions are also noticeable in this area of the county as well.  
+  The scale of this map causes individual census blocks to become indistinct. This makes the data tough to read, but we can get a general gist about the characteristics of the county. Block data may be too specific for our purposes here. We will be able to better assess the job totals within the county by aggregating the data into the larger census tracts.
+  
+```{r tractAgg, include = FALSE}
+#Tract-level Variable 
+options(tigris_class = "sp")
+co <- counties(cb = TRUE)
+head(co)
+display.brewer.all(type="seq")
+pal <- brewer.pal(9, "GnBu") 
+class(pal)
+#Tigris Data for Oklahoma State Census Tracts
+OK_tracts<- tracts('40', county = '109', cb = TRUE, year = 2015)
+print(OK_tracts)
+#Selecting Oklahoma County 
+#wac_tract.csv is wac_okall_aggregation.csv 
+WAC<- read.csv("wac_okall_tract_aggregation.csv", stringsAsFactors = FALSE) 
+#Selecting only OK County (109)
+only109 <- WAC[c(422:662), c(1:53)]
+print(only109)
+#Spatial Join
+ok109 <- geo_join(OK_tracts, only109, "GEOID", "work_tract")
+#Static Map
+totalJobsTracts <- spplot(ok109,"C000",col.regions = pal, cuts=8, main= "Total Number of Jobs within Oklahoma County Census Tracts") 
 ```
 
-# Mapping OD Data
+```{r showJobsInTracts, fig.align = 'center', echo=FALSE}
+totalJobsTracts
+```
+Through aggregating the census blocks into the larger census tracts, we are able to get a better look at the density of jobs within Oklahoma County. The majority of the jobs within the county surround downtown OKC. Tract 40109108601 has the highest concentration of jobs, with a total of 20,927. This southwestern tract employs workers mostly between the ages of [30 to 54](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf). The main job sectors in this tract are retailing trade and transportation/warehousing. In relation to the county as a whole, this tract displays the most common sectors but with the exception of [Healthcare & Social Assistance and Accommodation & Food Serivces](https://datausa.io/profile/geo/oklahoma-county-ok/). On the outskirts of OKC, the county's population is mostly employed by Mining and Quarrying, extracting mainly [clay, sand and gravel](http://mines.ok.gov/Websites/mines1/images/Production/2017%20Minerals%20Charts.pdf).  
 
-```{r, include = FALSE}
-# Fourth and fifth step. Static or interactive map. Subset of a tract? Two layers
+***
+
+##Mapping Origin-Destination Data
+
+```{r ODcode, include = FALSE}
+# Macklan
+od_all_both <- read.csv(file="OD_TEST_TRACT.csv")
+OD <- od_all_both %>% dplyr::select(work_tract, home_tract, S000)
+ok_work_tract <- od_all_both %>% filter(work_tract == home_tract)
+tracts <- tracts("40", "109")
+ok_all <- geo_join(tracts, OD, by_sp="GEOID", by_df="home_tract")
+ok_work_tract <- geo_join(tracts, ok_work_tract, by_sp="GEOID", by_df="home_tract")
+pal <- colorNumeric("Reds", domain = ok_all$S000)
+ok_all <- ok_all %>%
+          leaflet(width = "100%") %>%
+          addProviderTiles(provider = "CartoDB.Positron") %>%
+          addPolygons(popup = ~ str_extract(S000, "^([^,]*)"),
+                      color = "#444444",
+                      weight = 1,
+                      smoothFactor = 0,
+                      fillOpacity = 0.7,
+                      fillColor = ~ pal(S000)) %>%
+          addLegend("bottomright", 
+                    pal = pal, 
+                    values = ~ S000,
+                    title = "How many people live in each tract that work in tract: 40109108601",
+                    opacity = 1)
 ```
 
-#Additional Analysis
-```{r, include = FALSE}
-# at least one additional geocomputation
+```{r showOD, echo=FALSE}
+ok_all
+```
+Origin-Destination data for Oklahoma County was aggregated to the tract level here. The first thought was to map the tracts with the highest number of jobs and where they were living. 
+The Oklahoma County geocodes begin with [40109](https://census.missouri.edu/geocodes/?state=40), and numbers following the first five digits refer to the tract and block. The tract of 40109-108601 has the highest total number of jobs and had a very diverse set of home tracts and how many people live in each tract. Most of the other work tracts in Oklahoma County had the majority of people working there also living in that tract as well, the work tract 40109-108601 follows this trend, but also has people living in every other tract in the county and a more diverse workforce, in terms of where they live.  
+Although this tract is not OKC's "downtown", it has the greatest number of jobs because of its larger stockyards and warehouses in that tract. 
+
+***
+
+##Additional Analysis
+
+####Local Moran's I
+```{r moransI, include = FALSE}
+# Dani
+rac <- read.csv("RAC_tract_aggregation.csv")
+ok_tracts <- tracts('40', county='109', cb= TRUE, year = 2015)
+#merge on common variable
+merge <- geo_join(ok_tracts, rac, by_sp="GEOID", by_df="tract_geocode")
+#calculating "neighbors"
+nb <- poly2nb(merge, queen=TRUE)
+lw <- nb2listw(nb, style="W", zero.policy=TRUE)
+# moran's 1 stastistic for CE03 - Number of jobs with earnings greater than $3333/month
+moran.test(merge$CE03,lw)
+# moran's 1 stastistic for CE02 - Number of jobs with earnings $1251/month to $3333/month 
+moran.test(merge$CE02,lw)
+# moran's 1 stastistic for CE01 - Number of jobs with earnings $1250/month or less 
+moran.test(merge$CE01,lw)
 ```
 
+The [Local Moran's I](http://resources.esri.com/help/9.3/arcgisengine/java/gp_toolref/spatial_statistics_tools/how_cluster_and_outlier_analysis_colon_anselin_local_moran_s_i_spatial_statistics_works.htm) computation identifies clusters of features with values similar in magnitude and also identifies spatial outliers.  
+For this step, we calculated the local Moran's for three categories based on income: **`CE01`** which is the number of jobs with earnings \$1,250 per month or less, **`CE02`** which is the number of jobs with earnings \$1,251 per month to \$3,333 per month, and **`CE03`** which is the number of jobs with earnings greater than $3,333 per month.  
+For these tests, we defined “neighboring” polygons by adopting a contiguous neighbor definition where we’ll accept any contiguous polygon that shares at least on vertex (this is the “queen” case and is defined by setting the parameter `queen = TRUE`). Next, assigned weights to each neighboring polygon by assigning equal weight (`style = "W"`). This is accomplished by assigning the fraction 1/number of neighbors to each neighboring tract, then summing the weighted income values.  
+While this is the most intuitive way to summarize the neighbors’ values, it has one drawback in that polygons along the edges of the study area will base their lagged values on fewer polygons, thus potentially over- or under-estimating the true nature of the spatial autocorrelation in the data. For the sake of simplicity we chose the `style = "W"` option. The `zero.policy = TRUE` option allows for lists of non-neighbors.
+
+Here are the results from each of these tests: 
+
+####**`CE01` - Number of jobs with earnings up to $1,250 per month**
+
+| Data                               |`merge$CE01`|
+|------------------------------------|------------|
+| Weights                            | lw         |
+| Moran I Statistic Standard Deviate | 8.9957     |
+| P-Value                            | 2.2e^-16   |
+| Alternative Hypothesis             | Greater    |
+
+#####Sample Estimates  
+
+|Moran I Statistic| Expectation|   Variance|
+|-----------------|------------|-----------|
+|      0.323907048|-0.004166667|0.001330062|
+
+####**`CE02` - Number of jobs with earnings between $1,251 and $3,333 per month**
+
+| Data                               | `merge$CE02` |
+|------------------------------------|--------------|
+| Weights                            | lw           |
+| Moran I Statistic Standard Deviate | 7.9187       |
+| P-Value                            | 1.201 e^-15  |
+| Alternative Hypothesis             | Greater      |
+
+#####Sample Estimates  
+
+|Moran I statistic| Expectation|   Variance|
+|-----------------|------------|-----------|
+|      0.284475023|-0.004166667|0.001328666|
+
+####**`CE03` - Number of jobs with earnings greater than $3,333 per month**
+
+| Data                               | `merge$CE03` |
+|------------------------------------|--------------|
+| Weights                            | lw           |
+| Moran I Statistic Standard Deviate | 18.155       |
+| P-Value                            | 2.2 e^-16    |
+| Alternative Hypothesis             | Greater      |
+
+#####Sample Estimates  
+
+|Moran I Statistic|Expectation |Variance   |
+|-----------------|------------|-----------|
+|0.653477326      |-0.004166667|0.001312165|
+
+#### Results
+What we can gather from these results are that because all three earnings threshold values are positive, all are clustered (if there were negative values that would indicate that they are surrounded by dissimilar values). Additionally, because all three have such low p-values, these clusters are statistically significant, and not resulting from chance. 
+
+***
